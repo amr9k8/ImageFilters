@@ -1,0 +1,60 @@
+﻿  //Get Each Pixel of ImageMatrix
+            for (int i=0; y < hight; i++)
+            {
+                for(int j=0; x < width; j++)
+                {
+                     //Apply Alpha Filter 
+                    //________________________________________________________________________________________
+
+                    byte[] windowArray= new byte[maxSize * maxSize];
+                    int[] dx = new int[maxSize * maxSize];
+                    int[] dy = new int[maxSize * maxSize];
+                    var index = 0;
+                    for (var yShift = -(maxSize / 2); yShift <= maxSize / 2; yShift++)
+                    {
+                        for (var xShift = -(maxSize / 2); xShift <= maxSize / 2; xShift++)
+                        {
+                            dx[index] = xShift;
+                            dy[index] = yShift;
+                            index++;
+                        }
+                    }
+
+                    var sum = 0;
+                    byte max = 0;
+                    byte min = 255;
+                    var arrayLength = 0;
+                    //1)created windowArray
+                    //2) found max,and min , calucalted sum
+
+                    //Filling WindowArray
+                    for (var k = 0; k < maxSize * maxSize; k++)
+                    {
+                        //Define Boundries of ImgMatrix To Fit WindowSize
+                        var newY = i + dy[k];
+                        var newX = j + dx[k];
+                        if (newX < 0 || newX >= width || newY < 0 || newY >= hight)
+                            continue;
+
+                        windowArray[arrayLength] = ImageMatrix[newY, newX];
+
+                        //CALCULATING MAX AND MIN
+                            if (windowArray[arrayLength] > max)
+                                max = windowArray[arrayLength];
+
+                            if (windowArray[arrayLength] < min)
+                                min = windowArray[arrayLength];
+                        //Caluclating Sum of Array to Get Average
+                        sum += windowArray[arrayLength];
+                        arrayLength++;
+                    }
+
+                    sum -= max;
+                    sum -= min;
+                    arrayLength -= 2;
+                    var avg = sum / arrayLength;
+                    ImageMatrix[i, j] = (byte)avg;
+
+
+                }
+            }
