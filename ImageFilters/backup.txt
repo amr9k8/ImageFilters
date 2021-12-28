@@ -58,3 +58,23 @@
 
                 }
             }
+
+
+
+        public class WindowRes
+        {
+            public int centerX;
+            public int centerY;
+            public byte[,] windowArr;
+
+            public WindowRes()
+            {
+
+            }
+            public WindowRes(int x, int y , byte[,] windowArr)
+            {
+                this.centerX = x;
+                this.centerY = y;
+                this.windowArr = windowArr;
+            }
+        }

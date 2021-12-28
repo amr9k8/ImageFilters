@@ -109,5 +109,19 @@ namespace ImageFilters
 
 
         }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            int windowSize = 3;
+            int maxSize = 9;
+            if (textBox2.Text != "") { maxSize = Convert.ToInt32(textBox2.Text); }
+            Console.WriteLine(windowSize);
+            ImageOperations.AdaptiveFilter(ImageMatrix, windowSize, maxSize, pictureBox2, "countingSort");
+        }
     }
 }

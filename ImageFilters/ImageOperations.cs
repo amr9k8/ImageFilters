@@ -17,23 +17,7 @@ namespace ImageFilters
         /// 
 
         // A Struct To Help in Return Multiple Values
-        public class WindowRes
-        {
-            public int centerX;
-            public int centerY;
-            public byte[,] windowArr;
 
-            public WindowRes()
-            {
-
-            }
-            public WindowRes(int x, int y , byte[,] windowArr)
-            {
-                this.centerX = x;
-                this.centerY = y;
-                this.windowArr = windowArr;
-            }
-        }
         public static byte[,] OpenImage(string ImagePath)
         {
             Bitmap original_bm = new Bitmap(ImagePath);
@@ -249,6 +233,97 @@ namespace ImageFilters
         }
 
 
+        public static void AdaptiveFilter(byte[,] ImageMatrix, int windowSize, int maxSize, PictureBox PicBox, String sortType)
+        {
+
+            //make sure windowsize is odd
+            windowSize = (windowSize % 2 == 0) ? windowSize + 1 : windowSize;
+            //get matrix size
+            int hight = GetHeight(ImageMatrix);
+            int width = GetWidth(ImageMatrix);
+            //Get Each Pixel of ImageMatrix
+
+            for (int y = 0; y < hight; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int centerX = 0; //to set center of x 
+                    int centerY = 0; //to set center of y
+                    List<int> CurrentwindowArr = new List<int>();
+
+                    //get windowSize as array and get the center pixel of it 
+                    CurrentwindowArr = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                    if (CurrentwindowArr != null)
+                    {
+                        int Zmedian = 0;
+                        int Zmin = 0;
+                        int Zmax = 0;
+                        int Zxy = ImageMatrix[centerY, centerX];
+                        int A1 = 0;
+                        int A2 = 0;
+                        int middleIndex = 0;
+                        int B1 = 0;
+                        int B2 = 0;
+                        while (windowSize <= maxSize)
+                        {
+                         // 1) sort array
+                            CurrentwindowArr.Sort();
+                          //  Console.WriteLine("_____________________________");
+                          //  foreach (int i in CurrentwindowArr)
+                          //         Console.WriteLine(i);
+                         //  Console.WriteLine("_____________________________");
+                            // 2) calculate the median,A1,A2,Zmax,Zmin,Zmedian
+                            Zmin = CurrentwindowArr[0];
+                            Zmax = CurrentwindowArr[CurrentwindowArr.Count-1];
+                            middleIndex = CurrentwindowArr.Count / 2;
+                            Zmedian = CurrentwindowArr[middleIndex];
+                            A1 = Zmedian - Zmin;
+                            A2 = Zmax - Zmedian ;
+                            //Check if we found median , break
+                               if (A1 > 0 && A2 >0)
+                                 {
+                                    Console.WriteLine("Found Median value , : "+Zmedian);
+                                    break;
+                                 }
+                            //Reapeat till we find a median
+                           // Console.WriteLine(Zmedian);
+                            windowSize += 2;
+                            CurrentwindowArr = pickSlidingWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+
+                        }
+                        //Console.WriteLine(Zmedian);
+
+                        // 4) change  the selected pixel if only it's not noise
+                        try
+                        {
+                            B1 = Zxy - Zmin;
+                            B2 = Zxy -Zmax  ;
+                            if (B1 > 0 && B2 < 0)
+                                ImageMatrix[centerY, centerX] = (byte)Zxy;
+                            else
+                                ImageMatrix[centerY, centerX] = (byte)Zmedian;
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+
+
+                    }
+
+
+
+
+                }
+
+
+                // Display it using Imageoperation.DisplayImage()
+                ImageOperations.DisplayImage(ImageMatrix, PicBox);
+            }
+
+
+        }
 
 
     }
