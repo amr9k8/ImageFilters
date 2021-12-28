@@ -186,24 +186,23 @@ namespace ImageFilters
                     {
                         int centerX = 0; //to set center of x 
                         int centerY = 0; //to set center of y
-                        List<int> CurrentwindowArr = new List<int>();
 
-                        //get windowSize as array and get the center pixel of it 
-                        CurrentwindowArr = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
-                        if (CurrentwindowArr != null)
+                    //get Selected Window as 1darray and get the center pixel of it 
+                        List<int> Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                        if (Array1d != null)
                         {
                             // 1) sort array
-                            CurrentwindowArr.Sort();
+                            Array1d.Sort();
                             // 2) remove smallest and biggest values
-                            CurrentwindowArr.RemoveAt(0);
-                            CurrentwindowArr.RemoveAt(CurrentwindowArr.Count - 1);
+                            Array1d.RemoveAt(0);
+                            Array1d.RemoveAt(Array1d.Count - 1);
 
                             // 3) calculate the average
                             int avg = 0;
                             int sum = 0;
-                            foreach (int val in CurrentwindowArr)
+                            foreach (int val in Array1d)
                                 sum += val;
-                            avg = (int)sum / CurrentwindowArr.Count;
+                            avg = (int)sum / Array1d.Count;
 
 
                             // 4) change  the selected pixel as center of window to the average value
@@ -249,16 +248,16 @@ namespace ImageFilters
                 {
                     int centerX = 0; //to set center of x 
                     int centerY = 0; //to set center of y
-                    List<int> CurrentwindowArr = new List<int>();
+                    List<int> Array1d = new List<int>();
 
                     //get windowSize as array and get the center pixel of it 
-                    CurrentwindowArr = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
-                    if (CurrentwindowArr != null)
+                    Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                    if (Array1d != null)
                     {
                         int Zmedian = 0;
                         int Zmin = 0;
                         int Zmax = 0;
-                        int Zxy = ImageMatrix[centerY, centerX];
+                        byte Zxy = ImageMatrix[centerY, centerX];
                         int A1 = 0;
                         int A2 = 0;
                         int middleIndex = 0;
@@ -267,16 +266,12 @@ namespace ImageFilters
                         while (windowSize <= maxSize)
                         {
                          // 1) sort array
-                            CurrentwindowArr.Sort();
-                          //  Console.WriteLine("_____________________________");
-                          //  foreach (int i in CurrentwindowArr)
-                          //         Console.WriteLine(i);
-                         //  Console.WriteLine("_____________________________");
-                            // 2) calculate the median,A1,A2,Zmax,Zmin,Zmedian
-                            Zmin = CurrentwindowArr[0];
-                            Zmax = CurrentwindowArr[CurrentwindowArr.Count-1];
-                            middleIndex = CurrentwindowArr.Count / 2;
-                            Zmedian = CurrentwindowArr[middleIndex];
+                            Array1d.Sort();
+                         // 2) calculate the median,A1,A2,Zmax,Zmin,Zmedian
+                            Zmin = Array1d[0];
+                            Zmax = Array1d[Array1d.Count-1];
+                            middleIndex = Array1d.Count / 2;
+                            Zmedian = Array1d[middleIndex];
                             A1 = Zmedian - Zmin;
                             A2 = Zmax - Zmedian ;
                             //Check if we found median , break
@@ -285,10 +280,9 @@ namespace ImageFilters
                                     Console.WriteLine("Found Median value , : "+Zmedian);
                                     break;
                                  }
-                            //Reapeat till we find a median
-                           // Console.WriteLine(Zmedian);
+                           //Reapeat till we find a median
                             windowSize += 2;
-                            CurrentwindowArr = pickSlidingWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                            Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
 
                         }
                         //Console.WriteLine(Zmedian);
@@ -298,10 +292,10 @@ namespace ImageFilters
                         {
                             B1 = Zxy - Zmin;
                             B2 = Zxy -Zmax  ;
-                            if (B1 > 0 && B2 < 0)
-                                ImageMatrix[centerY, centerX] = (byte)Zxy;
+                            if (B1 > 0 && B2 < 0 )
+                                ImageMatrix[centerY, centerX] =  Zxy;
                             else
-                                ImageMatrix[centerY, centerX] = (byte)Zmedian;
+                                ImageMatrix[centerY, centerX] =(byte)Zmedian;
 
                         }
                         catch (Exception ex)
