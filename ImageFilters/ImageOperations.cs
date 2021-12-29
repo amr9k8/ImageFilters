@@ -15,8 +15,7 @@ namespace ImageFilters
         /// <param name="ImagePath">Image file path</param>
         /// <returns>2D array of gray values</returns>
         /// 
-
-        // A Struct To Help in Return Multiple Values
+ 
 
         public static byte[,] OpenImage(string ImagePath)
         {
@@ -132,7 +131,7 @@ namespace ImageFilters
             PicBox.Image = ImageBMP;
         }
 
-        public static int[] pickWindowAndItsCenter(byte[,] ImageMatrix, int windowSize, int starty, int startx, ref int centerX, ref int centerY)
+        public static int[] pickWindowAndItsCenter(byte[,] ImageMatrix, int windowSize, int starty, int startx, ref int centerX, ref int centerY , ref int kthsmallest, ref int kthlargest)
         {
 
             //check if window can fit on whole matrix or not
@@ -152,6 +151,8 @@ namespace ImageFilters
             //2) get the window as 1d array and return it
             int[] windowArr = new int[windowSize * windowSize];
             int counter = 0;
+            int max = -1;
+            int min = 999;
             for (int y = 0; y < windowSize; y++)
             {
                 for (int x = 0; x < windowSize; x++)
@@ -159,6 +160,17 @@ namespace ImageFilters
                     try
                     {
                         windowArr[counter] = ImageMatrix[starty + y, startx + x];
+                        if (max < windowArr[counter])
+                        {
+                            max = windowArr[counter];
+                            kthlargest = counter;
+                        } 
+                        if (min > windowArr[counter])
+                        {
+                            min = windowArr[counter];
+                            kthsmallest = counter;
+                        }
+                           
                         counter++;
                     }
                     catch (Exception ex)
@@ -181,21 +193,31 @@ namespace ImageFilters
             //get matrix size
             int hight = GetHeight(ImageMatrix);
             int width = GetWidth(ImageMatrix);
+            bool flagKthElement = false;
             //Get Each Pixel of ImageMatrix
             for (int y = 0; y < hight; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
+                    
                     int centerX = 0; //to set center of x 
                     int centerY = 0; //to set center of y
+                    int kthsmallest = -1;
+                    int kthlargest = -1;
+                   
 
                     //get Selected Window as 1darray and get the center pixel of it 
-                    int[] Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                    int[] Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY,ref kthsmallest ,ref kthlargest);
                     if (Array1d != null)
                     {
                         // 1) sort array
                         if (sortType == "countingSort")
                             ImageOperations.countingSort(Array1d);
+                       else if (sortType == "kthElementSort")
+                        {
+                            flagKthElement = true;
+                        }
+                            
 
 
                         // 2) remove smallest and biggest values
@@ -203,8 +225,19 @@ namespace ImageFilters
                         // 3) calculate the average
                         int avg = 0;
                         int sum = 0;
-                        for (int k = 1; k < Array1d.Length - 1; k++)
-                            sum += Array1d[k];
+                        if (flagKthElement == false)
+                        {
+                            for (int k = 1; k < Array1d.Length - 1; k++)
+                                sum += Array1d[k];
+                        }
+                        else if (flagKthElement == true)
+                        {
+                            for (int k = 0; k < Array1d.Length; k++)
+                                sum += Array1d[k];
+
+                            sum = sum - (Array1d[kthsmallest] + Array1d[kthlargest]);
+                            flagKthElement = false;
+                        }
 
                         avg = (sum / (Array1d.Length - 2));
                         // 4) change  the selected pixel as center of window to the average value
@@ -217,6 +250,11 @@ namespace ImageFilters
                         {
                             Console.WriteLine(ex.Message);
                         }
+
+
+
+                        
+                       
 
 
                     }
@@ -251,8 +289,10 @@ namespace ImageFilters
                 {
                     int centerX = 0; //to set center of x 
                     int centerY = 0; //to set center of y
+                    int kthsmallest =-1;
+                    int kthlargest=-1;
                     //get windowSize as array and get the center pixel of it 
-                    int[] Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                    int[] Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY,ref kthsmallest, ref kthlargest);
                     if (Array1d != null)
                     {
                         int Zmedian = 0;
@@ -287,7 +327,7 @@ namespace ImageFilters
                             }
                             //Reapeat till we find a median
                             windowSize += 2;
-                            Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                            Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY, ref kthsmallest,ref kthlargest);
 
                         }
 
@@ -403,11 +443,6 @@ namespace ImageFilters
         }
 
 
-        public static int findKthElement(int[] nums, int k)
-        {
-            int N = nums.Length;
-            return nums[N - k];
-        }
     }
 }
 
