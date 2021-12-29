@@ -224,7 +224,7 @@ namespace ImageFilters
                     }
                 
 
-                // Display it using Imageoperation.DisplayImage()
+                //show image
                 ImageOperations.DisplayImage(ImageMatrix, PicBox);
             }
 
@@ -312,7 +312,7 @@ namespace ImageFilters
                 }
 
 
-                // Display it using Imageoperation.DisplayImage()
+                //show image
                 ImageOperations.DisplayImage(ImageMatrix, PicBox);
             }
 
