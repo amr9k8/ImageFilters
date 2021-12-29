@@ -95,7 +95,6 @@ namespace ImageFilters
             int windowSize = 3;
          
             if (textBox1.Text != "") { windowSize = Convert.ToInt32(textBox1.Text); }
-            Console.WriteLine(windowSize);
             ImageOperations.AlphaFilter(ImageMatrix, windowSize, pictureBox2, "countingSort");
 
 
@@ -112,16 +111,27 @@ namespace ImageFilters
 
         private void button5_Click(object sender, EventArgs e)
         {
+            int windowSize = 3;
 
+            if (textBox1.Text != "") { windowSize = Convert.ToInt32(textBox1.Text); }
+            ImageOperations.AlphaFilter(ImageMatrix, windowSize, pictureBox2, "kthElementSort");
         }
 
         private void button6_Click(object sender, EventArgs e)
+        { // 3->5->7->21  "slidingWindow"
+            int windowSize = 3;
+            int maxSize = 21;
+            if (textBox2.Text != "") { maxSize = Convert.ToInt32(textBox2.Text); }
+            ImageOperations.AdaptiveFilter(ImageMatrix, windowSize, maxSize, pictureBox2, "countingSort");
+        }
+
+        private void button7_Click(object sender, EventArgs e)
         {
             int windowSize = 3;
-            int maxSize = 9;
+            int maxSize = 21;
             if (textBox2.Text != "") { maxSize = Convert.ToInt32(textBox2.Text); }
-            Console.WriteLine(windowSize);
-            ImageOperations.AdaptiveFilter(ImageMatrix, windowSize, maxSize, pictureBox2, "countingSort");
+            ImageOperations.AdaptiveFilter(ImageMatrix, windowSize, maxSize, pictureBox2, "quickSort");
+
         }
     }
 }

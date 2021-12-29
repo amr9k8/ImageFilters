@@ -132,97 +132,100 @@ namespace ImageFilters
             PicBox.Image = ImageBMP;
         }
 
-        public static List<int> pickWindowAndItsCenter(byte[,] ImageMatrix, int windowSize, int starty , int startx,ref int centerX,ref int centerY)
+        public static int[] pickWindowAndItsCenter(byte[,] ImageMatrix, int windowSize, int starty, int startx, ref int centerX, ref int centerY)
         {
-            
+
             //check if window can fit on whole matrix or not
             int borderpixeltotal = windowSize - 1; // maxize-1 because if size=5x5 then pixel must have 4 more in each direction
-                int endy = starty + borderpixeltotal;
-                int endx = startx + borderpixeltotal;
-                int hight = ImageOperations.GetHeight(ImageMatrix) - 1;
-                int width = ImageOperations.GetWidth(ImageMatrix) - 1;
-                if (endy > hight ||  endx > width)
-                    return null;
+            int endy = starty + borderpixeltotal;
+            int endx = startx + borderpixeltotal;
+            int hight = ImageOperations.GetHeight(ImageMatrix) - 1;
+            int width = ImageOperations.GetWidth(ImageMatrix) - 1;
+            if (endy > hight || endx > width)
+                return null;
 
-          //if valid then get the whole window  as 1d List
+            //if valid then get the whole window  as 1d List
 
-          //1) set the center of the window using refernce param
-            centerX = (int)(startx + windowSize / 2);
-            centerY = (int)(starty + windowSize / 2);
-           
+            //1) set the center of the window using refernce param
+            centerX = startx + windowSize / 2;
+            centerY = starty + windowSize / 2;
             //2) get the window as 1d array and return it
-            List<int> windowArr = new List<int>();
+            int[] windowArr = new int[windowSize * windowSize];
+            int counter = 0;
             for (int y = 0; y < windowSize; y++)
+            {
                 for (int x = 0; x < windowSize; x++)
                 {
                     try
                     {
-                       
-                        windowArr.Add(ImageMatrix[starty + y, startx + x]);
+                        windowArr[counter] = ImageMatrix[starty + y, startx + x];
+                        counter++;
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine("y = " + y + "x = " + x);
                         Console.WriteLine(ex.Message);
                     }
-                     
                 }
-           
+
+            }
+
+
             return windowArr;
         }
         public static void AlphaFilter(byte[,] ImageMatrix, int windowSize, PictureBox PicBox, String sortType)
         {
-             
+
             //make sure windowsize is odd
             windowSize = (windowSize % 2 == 0) ? windowSize + 1 : windowSize;
             //get matrix size
             int hight = GetHeight(ImageMatrix);
             int width = GetWidth(ImageMatrix);
             //Get Each Pixel of ImageMatrix
-
-                for (int y = 0; y < hight; y++)
+            for (int y = 0; y < hight; y++)
+            {
+                for (int x = 0; x < width; x++)
                 {
-                    for (int x = 0; x < width; x++)
-                    {
-                        int centerX = 0; //to set center of x 
-                        int centerY = 0; //to set center of y
+                    int centerX = 0; //to set center of x 
+                    int centerY = 0; //to set center of y
 
                     //get Selected Window as 1darray and get the center pixel of it 
-                        List<int> Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
-                        if (Array1d != null)
+                    int[] Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                    if (Array1d != null)
+                    {
+                        // 1) sort array
+                        if (sortType == "countingSort")
+                            ImageOperations.countingSort(Array1d);
+
+
+                        // 2) remove smallest and biggest values
+
+                        // 3) calculate the average
+                        int avg = 0;
+                        int sum = 0;
+                        for (int k = 1; k < Array1d.Length - 1; k++)
+                            sum += Array1d[k];
+
+                        avg = (sum / (Array1d.Length - 2));
+                        // 4) change  the selected pixel as center of window to the average value
+
+                        try
                         {
-                            // 1) sort array
-                            Array1d.Sort();
-                            // 2) remove smallest and biggest values
-                            Array1d.RemoveAt(0);
-                            Array1d.RemoveAt(Array1d.Count - 1);
-
-                            // 3) calculate the average
-                            int avg = 0;
-                            int sum = 0;
-                            foreach (int val in Array1d)
-                                sum += val;
-                            avg = (int)sum / Array1d.Count;
-
-
-                            // 4) change  the selected pixel as center of window to the average value
-                            try
-                            {
-                                ImageMatrix[centerY,centerX] = (byte)avg;
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.Message);
-                            }
-    
-
+                            ImageMatrix[centerY, centerX] = (byte)avg;
                         }
-                       
-
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
 
 
                     }
-                
+
+
+
+
+                }
+
 
                 //show image
                 ImageOperations.DisplayImage(ImageMatrix, PicBox);
@@ -248,10 +251,8 @@ namespace ImageFilters
                 {
                     int centerX = 0; //to set center of x 
                     int centerY = 0; //to set center of y
-                    List<int> Array1d = new List<int>();
-
                     //get windowSize as array and get the center pixel of it 
-                    Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
+                    int[] Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
                     if (Array1d != null)
                     {
                         int Zmedian = 0;
@@ -265,37 +266,42 @@ namespace ImageFilters
                         int B2 = 0;
                         while (windowSize <= maxSize)
                         {
-                         // 1) sort array
-                            Array1d.Sort();
-                         // 2) calculate the median,A1,A2,Zmax,Zmin,Zmedian
+                            // 1) sort array
+                            if (sortType == "countingSort")
+                                ImageOperations.countingSort(Array1d);
+                            else if (sortType == "quickSort")
+                                ImageOperations.quickSort(Array1d, 0, Array1d.Length - 1);
+
+                            //Array.Sort(Array1d);
+                            // 2) calculate the median,A1,A2,Zmax,Zmin,Zmedian
                             Zmin = Array1d[0];
-                            Zmax = Array1d[Array1d.Count-1];
-                            middleIndex = Array1d.Count / 2;
-                            Zmedian = Array1d[middleIndex];
+                            Zmax = Array1d[Array1d.Length - 1];
+                            Zmedian = Array1d[Array1d.Length / 2];
                             A1 = Zmedian - Zmin;
-                            A2 = Zmax - Zmedian ;
+                            A2 = Zmax - Zmedian;
                             //Check if we found median , break
-                               if (A1 > 0 && A2 >0)
-                                 {
-                                    Console.WriteLine("Found Median value , : "+Zmedian);
-                                    break;
-                                 }
-                           //Reapeat till we find a median
+                            if (A1 > 0 && A2 > 0)
+                            {
+                                //Console.WriteLine("Found Median value , : "+Zmedian);
+                                break;
+                            }
+                            //Reapeat till we find a median
                             windowSize += 2;
                             Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY);
 
                         }
+
                         //Console.WriteLine(Zmedian);
 
                         // 4) change  the selected pixel if only it's not noise
                         try
                         {
                             B1 = Zxy - Zmin;
-                            B2 = Zxy -Zmax  ;
-                            if (B1 > 0 && B2 < 0 )
-                                ImageMatrix[centerY, centerX] =  Zxy;
+                            B2 = Zmax - Zxy;
+                            if (B1 > 0 && B2 > 0)
+                                ImageMatrix[centerY, centerX] = Zxy; // this pixel is not noise
                             else
-                                ImageMatrix[centerY, centerX] =(byte)Zmedian;
+                                ImageMatrix[centerY, centerX] = (byte)Zmedian;//this is noise pixel and replace with median
 
                         }
                         catch (Exception ex)
@@ -318,7 +324,95 @@ namespace ImageFilters
 
 
         }
+        //################################[SORTING ALGORIHTM]################################
 
 
+
+
+        // function for counting sort
+        public static void countingSort(int[] Array)
+        {
+            int n = Array.Length;
+            int max = 0;
+            //find largest element in the Array
+            for (int i = 0; i < n; i++)
+            {
+                if (max < Array[i])
+                {
+                    max = Array[i];
+                }
+            }
+
+            //Create a freq array to store number of occurrences of 
+            //each unique elements in the given array 
+            int[] freq = new int[max + 1];
+            for (int i = 0; i < max + 1; i++)
+            {
+                freq[i] = 0;
+            }
+            for (int i = 0; i < n; i++)
+            {
+                freq[Array[i]]++;
+            }
+
+            //sort the given array using freq array
+            for (int i = 0, j = 0; i <= max; i++)
+            {
+                while (freq[i] > 0)
+                {
+                    Array[j] = i;
+                    j++;
+                    freq[i]--;
+                }
+            }
+        }
+
+        public static void quickSort(int[] arr, int start, int end)
+        {
+            int i;
+            if (start < end)
+            {
+                i = Partition(arr, start, end);
+
+                quickSort(arr, start, i - 1);
+                quickSort(arr, i + 1, end);
+            }
+        }
+
+        public static int Partition(int[] arr, int start, int end)
+        {
+            int temp;
+            int p = arr[end];
+            int i = start - 1;
+
+            for (int j = start; j <= end - 1; j++)
+            {
+                if (arr[j] <= p)
+                {
+                    i++;
+                    temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+            }
+
+            temp = arr[i + 1];
+            arr[i + 1] = arr[end];
+            arr[end] = temp;
+            return i + 1;
+        }
+
+
+        public static int findKthElement(int[] nums, int k)
+        {
+            int N = nums.Length;
+            return nums[N - k];
+        }
     }
 }
+
+
+
+
+
+ 

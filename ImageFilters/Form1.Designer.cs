@@ -177,7 +177,7 @@ namespace ImageFilters
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(167, 54);
             this.button5.TabIndex = 13;
-            this.button5.Text = "Alpha Filter CountingSort";
+            this.button5.Text = "Alpha Filter Kthelement Sort";
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
@@ -201,8 +201,9 @@ namespace ImageFilters
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(160, 54);
             this.button7.TabIndex = 15;
-            this.button7.Text = "Alpha Filter CountingSort";
+            this.button7.Text = "Adaptive Filter QuickSort";
             this.button7.UseVisualStyleBackColor = true;
+            this.button7.Click += new System.EventHandler(this.button7_Click);
             // 
             // textBox2
             // 
