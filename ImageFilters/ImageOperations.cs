@@ -4,7 +4,6 @@ using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Drawing.Imaging;
-
 namespace ImageFilters
 {
     public class ImageOperations
@@ -131,46 +130,40 @@ namespace ImageFilters
             PicBox.Image = ImageBMP;
         }
 
-        public static int[] pickWindowAndItsCenter(byte[,] ImageMatrix, int windowSize, int starty, int startx, ref int centerX, ref int centerY , ref int kthsmallest, ref int kthlargest)
+        public static int[] pickWindowAndItsCenter(byte[,] ImageMatrix, int windowSize, int CurrentPixelRow, int CurrentPixelColumn, ref int centerX, ref int centerY , ref int kthsmallest, ref int kthlargest)
         {
 
             //check if window can fit on whole matrix or not
-            int borderpixeltotal = windowSize - 1; // maxize-1 because if size=5x5 then pixel must have 4 more in each direction
-            int endy = starty + borderpixeltotal;
-            int endx = startx + borderpixeltotal;
-            int hight = ImageOperations.GetHeight(ImageMatrix) - 1;
-            int width = ImageOperations.GetWidth(ImageMatrix) - 1;
-            if (endy > hight || endx > width)
+            int borderpixeltotal = windowSize - 1; // maxize-1 because if size=5x5 then Currentpixelposition must have 4 pixels more in y and x direction
+            int lastpixelRow = CurrentPixelRow + borderpixeltotal;
+            int lastpixelColumn = CurrentPixelColumn + borderpixeltotal;
+            int Imghight = ImageOperations.GetHeight(ImageMatrix) - 1;
+            int Imgwidth = ImageOperations.GetWidth(ImageMatrix) - 1;
+            if (lastpixelRow > Imghight || lastpixelColumn > Imgwidth)
                 return null;
 
             //if valid then get the whole window  as 1d List
 
             //1) set the center of the window using refernce param
-            centerX = startx + windowSize / 2;
-            centerY = starty + windowSize / 2;
+            centerX = CurrentPixelColumn + windowSize / 2;
+            centerY = CurrentPixelRow + windowSize / 2;
             //2) get the window as 1d array and return it
             int[] windowArr = new int[windowSize * windowSize];
             int counter = 0;
-            int max = -1;
-            int min = 999;
+            kthlargest = -1;
+            kthsmallest = 999;
             for (int y = 0; y < windowSize; y++)
             {
                 for (int x = 0; x < windowSize; x++)
                 {
                     try
                     {
-                        windowArr[counter] = ImageMatrix[starty + y, startx + x];
-                        if (max < windowArr[counter])
-                        {
-                            max = windowArr[counter];
-                            kthlargest = counter;
-                        } 
-                        if (min > windowArr[counter])
-                        {
-                            min = windowArr[counter];
-                            kthsmallest = counter;
-                        }
-                           
+                        windowArr[counter] = ImageMatrix[CurrentPixelRow + y, CurrentPixelColumn + x];
+                        if (kthlargest < windowArr[counter])
+                            kthlargest = windowArr[counter];
+                        
+                        if (kthsmallest > windowArr[counter])
+                            kthsmallest = windowArr[counter];
                         counter++;
                     }
                     catch (Exception ex)
@@ -210,37 +203,29 @@ namespace ImageFilters
                     int[] Array1d = pickWindowAndItsCenter(ImageMatrix, windowSize, y, x, ref centerX, ref centerY,ref kthsmallest ,ref kthlargest);
                     if (Array1d != null)
                     {
-                        // 1) sort array
-                        if (sortType == "countingSort")
-                            ImageOperations.countingSort(Array1d);
-                       else if (sortType == "kthElementSort")
-                        {
-                            flagKthElement = true;
-                        }
-                            
-
-
-                        // 2) remove smallest and biggest values
-
-                        // 3) calculate the average
+                 
                         int avg = 0;
                         int sum = 0;
-                        if (flagKthElement == false)
+
+                        // 1) sort array
+                        if (sortType == "countingSort")
                         {
-                            for (int k = 1; k < Array1d.Length - 1; k++)
+                            ImageOperations.countingSort(Array1d);
+                            for (int k = 1; k < Array1d.Length - 1; k++)// countingsort => sort then add from 2nd to last -1 skipped min,max values 
                                 sum += Array1d[k];
                         }
-                        else if (flagKthElement == true)
+                        else if (sortType == "kthElementSort")
                         {
-                            for (int k = 0; k < Array1d.Length; k++)
+                            for (int k = 0; k < Array1d.Length; k++) //kthelement => add total item and subtract max,min
                                 sum += Array1d[k];
 
-                            sum = sum - (Array1d[kthsmallest] + Array1d[kthlargest]);
-                            flagKthElement = false;
+                            sum = sum - (kthsmallest+kthlargest);
                         }
 
+                        // 2) calculate the average
                         avg = (sum / (Array1d.Length - 2));
-                        // 4) change  the selected pixel as center of window to the average value
+                        
+                       // 3) change  the selected pixel as center of window to the average value
 
                         try
                         {
@@ -250,11 +235,6 @@ namespace ImageFilters
                         {
                             Console.WriteLine(ex.Message);
                         }
-
-
-
-                        
-                       
 
 
                     }
@@ -440,6 +420,50 @@ namespace ImageFilters
             arr[i + 1] = arr[end];
             arr[end] = temp;
             return i + 1;
+        }
+
+        /*  public static int KthSmallestHeap(int[] arr, int k)
+          {
+              Heap heap = new Heap(arr);
+              heap.BuildMinHeap();
+              int maxIndex = heap.Size() - 1;
+
+              for (int i = k; i > 0; i--)
+              {
+                  // Placing smallest element from 0th index to end indexes
+                  heap.Swap(0, maxIndex);
+                  // Reducing maxIndex so heapify runs till unsorted elements only leaving swapped elements
+                  maxIndex--;
+                  // MinHeapify places smallest element at 0th index
+                  heap.MinHeapify(0, maxIndex);
+              }
+
+              return heap.ElementAt(heap.Size() - k);
+          }
+
+          public static int KthLargestHeap(int[] arr, int k)
+          {
+              Heap heap = new Heap(arr);
+              heap.BuildMaxHeap();
+              int maxIndex = heap.Size() - 1;
+
+              for (int i = k; i > 0; i--)
+              {
+                  heap.Swap(0, maxIndex);
+                  maxIndex--;
+                  heap.MaxHeapify(0, maxIndex);
+              }
+
+              return heap.ElementAt(heap.Size() - k);
+          }
+         */
+        public static void alert(int x)
+        {
+            if(x==1)
+           MessageBox.Show("Please Enter WindowSize & WindowMaxSize","Error Fields Are Null");
+            else if (x==2)
+                MessageBox.Show("Please Load An Image ","Error No Image Found");
+
         }
 
 
