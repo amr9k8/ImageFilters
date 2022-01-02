@@ -34,15 +34,15 @@ namespace ImageFilters
             }
         }
 
-  
-      
+
+
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
 
         }
 
-   
+
 
         private void label1_Click(object sender, EventArgs e)
         {
@@ -87,7 +87,7 @@ namespace ImageFilters
 
 
 
- 
+
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
@@ -114,21 +114,26 @@ namespace ImageFilters
 
             int windowSize = 3;
             int maxSize = 21;
+            bool done = false;
             if (textBox1.Text != "") { windowSize = Convert.ToInt32(textBox1.Text); }
             if (textBox2.Text != "") { maxSize = Convert.ToInt32(textBox2.Text); }
-
-            if (ImageMatrix == null)
-                ImageOperations.alert(2);
+            if (windowSize <= 0 ||  maxSize <= 0){ ImageOperations.alert(4); return; }
+            if (ImageMatrix == null) { ImageOperations.alert(2); }
             else
             {
-                    if (radioButton1.Checked)    //alpha + countsort
-                    ImageOperations.AlphaFilter(ImageMatrix, windowSize, pictureBox2, "countingSort");
+                if (radioButton1.Checked)    //alpha + countsort
+                { ImageOperations.AlphaFilter(ImageMatrix, windowSize, pictureBox2, "countingSort"); done = true; }
                 else if (radioButton2.Checked)//alpha + kthsort
-                    ImageOperations.AlphaFilter(ImageMatrix, windowSize, pictureBox2, "kthElementSort");
+                { ImageOperations.AlphaFilter(ImageMatrix, windowSize, pictureBox2, "kthElementSort"); done = true; }
                 else if (radioButton3.Checked) //adaptive + quicksort
-                    ImageOperations.AdaptiveFilter(ImageMatrix, windowSize, maxSize, pictureBox2, "countingSort");
+                { ImageOperations.AdaptiveFilter(ImageMatrix, windowSize, maxSize, pictureBox2, "quickSort", true); done = true; }
                 else if (radioButton4.Checked) //adaptive+countsort
-                    ImageOperations.AdaptiveFilter(ImageMatrix, windowSize, maxSize, pictureBox2, "quickSort");
+                { ImageOperations.AdaptiveFilter(ImageMatrix, windowSize, maxSize, pictureBox2, "countingSort", true); done = true; }
+            }
+             if(done)
+            {
+                done = false;
+                ImageOperations.alert(3);
             }
 
         }
@@ -140,6 +145,7 @@ namespace ImageFilters
 
         private void button3_Click_1(object sender, EventArgs e)
         {
+            bool done = false;
             if (textBox1.Text == "" || textBox2.Text == "")
                 ImageOperations.alert(1);
             if (ImageMatrix == null)
@@ -179,6 +185,7 @@ namespace ImageFilters
                 ZGF.add_curve("f(N) = counting", x_values, y_values_count, Color.Red);
                 ZGF.add_curve("f(N) = selecting kth element", x_values, y_values_kthELement, Color.Blue);
                 ZGF.Show();
+                done = true; 
 
             }
                
@@ -199,14 +206,14 @@ namespace ImageFilters
                     Console.WriteLine("counter is : " + c + " windows size is : " + i);
                     x_values[c] = i;
                     int Start = System.Environment.TickCount;
-                    ImageOperations.AdaptiveFilter(ImageMatrix, 3, maxSize, pictureBox2, "countingSort");
+                    ImageOperations.AdaptiveFilter(ImageMatrix, 3, maxSize, pictureBox2, "countingSort",false);
                     int End = System.Environment.TickCount;
                     double Time = End - Start;
                     Time /= 1000;
                     y_values_count[c] = Time;
                     // System.Threading.Thread.Sleep(5300);
                     int Start2 = System.Environment.TickCount;
-                    ImageOperations.AdaptiveFilter(ImageMatrix, 3, maxSize, pictureBox2, "quickSort");
+                    ImageOperations.AdaptiveFilter(ImageMatrix, 3, maxSize, pictureBox2, "quickSort", false);
                     int End2 = System.Environment.TickCount;
                     double Time2 = End2 - Start2;
                     Time2 /= 1000;
@@ -218,9 +225,14 @@ namespace ImageFilters
                 ZGF.add_curve("f(N) = countingsort", x_values, y_values_count, Color.Red);
                 ZGF.add_curve("f(N) = quicksort", x_values, y_values_quick, Color.Blue);
                 ZGF.Show();
+                done = true;
 
             }
-               
+            if (done)
+            {
+                done = false;
+                ImageOperations.alert(3);
+            }
 
         }
 
@@ -230,6 +242,11 @@ namespace ImageFilters
         }
 
         private void radioButton6_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox3_TextChanged(object sender, EventArgs e)
         {
 
         }

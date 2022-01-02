@@ -170,6 +170,7 @@ namespace ImageFilters
                     {
                         Console.WriteLine("y = " + y + "x = " + x);
                         Console.WriteLine(ex.Message);
+                        return null;
                     }
                 }
 
@@ -244,25 +245,28 @@ namespace ImageFilters
 
                 }
 
-
-                //show image
-                ImageOperations.DisplayImage(ImageMatrix, PicBox);
+                //
+                
             }
 
+            //show image
+            ImageOperations.DisplayImage(ImageMatrix, PicBox);
 
         }
 
 
-        public static void AdaptiveFilter(byte[,] ImageMatrix, int windowSize, int maxSize, PictureBox PicBox, String sortType)
+        public static void AdaptiveFilter(byte[,] ImageMatrix, int windowSize, int maxSize, PictureBox PicBox, String sortType,bool debugMode )
         {
 
             //make sure windowsize is odd
             windowSize = (windowSize % 2 == 0) ? windowSize + 1 : windowSize;
+            maxSize = (maxSize % 2 == 0) ? maxSize + 1 : maxSize;
+            maxSize = (maxSize == 3) ? maxSize + 2 : maxSize;
             //get matrix size
             int hight = GetHeight(ImageMatrix);
             int width = GetWidth(ImageMatrix);
             //Get Each Pixel of ImageMatrix
-
+       
             for (int y = 0; y < hight; y++)
             {
                 for (int x = 0; x < width; x++)
@@ -284,14 +288,15 @@ namespace ImageFilters
                         int middleIndex = 0;
                         int B1 = 0;
                         int B2 = 0;
+                        bool medianflag = false;
                         while (windowSize <= maxSize)
                         {
                             // 1) sort array
-                            if (sortType == "countingSort")
+                            if (sortType == "countingSort") //beter preformance with adaptive
                                 ImageOperations.countingSort(Array1d);
                             else if (sortType == "quickSort")
                                 ImageOperations.quickSort(Array1d, 0, Array1d.Length - 1);
-
+                      
                             //Array.Sort(Array1d);
                             // 2) calculate the median,A1,A2,Zmax,Zmin,Zmedian
                             Zmin = Array1d[0];
@@ -299,9 +304,13 @@ namespace ImageFilters
                             Zmedian = Array1d[Array1d.Length / 2];
                             A1 = Zmedian - Zmin;
                             A2 = Zmax - Zmedian;
+                            //Console.WriteLine(Zmedian);
+                            //if(Zmedian == 0)
+                            //    Console.WriteLine("Zeroooooooooooo");
                             //Check if we found median , break
                             if (A1 > 0 && A2 > 0)
                             {
+                                medianflag = true;
                                 //Console.WriteLine("Found Median value , : "+Zmedian);
                                 break;
                             }
@@ -315,13 +324,26 @@ namespace ImageFilters
 
                         // 4) change  the selected pixel if only it's not noise
                         try
-                        {
-                            B1 = Zxy - Zmin;
-                            B2 = Zmax - Zxy;
-                            if (B1 > 0 && B2 > 0)
-                                ImageMatrix[centerY, centerX] = Zxy; // this pixel is not noise
-                            else
-                                ImageMatrix[centerY, centerX] = (byte)Zmedian;//this is noise pixel and replace with median
+                        { 
+                            if (medianflag == true)
+                            {
+                                B1 = Zxy - Zmin;
+                                B2 = Zmax - Zxy;
+                                if (B1 > 0 && B2 > 0)
+                                    ImageMatrix[centerY, centerX] = Zxy; // this pixel is not noise
+                                else
+                                    ImageMatrix[centerY, centerX] = (byte)Zmedian;//this is noise pixel and replace with median
+
+                            }else //windowsize is greater than maxsize 
+                            {
+                                Console.WriteLine(Zmedian);
+
+                               if(debugMode == true)
+                                    alert(5);
+
+                                ImageMatrix[centerY, centerX] = (byte)Zxy;
+                                return;
+                            }
 
                         }
                         catch (Exception ex)
@@ -338,54 +360,60 @@ namespace ImageFilters
                 }
 
 
-                //show image
-                ImageOperations.DisplayImage(ImageMatrix, PicBox);
+                
+           
             }
+            //show image
+            ImageOperations.DisplayImage(ImageMatrix, PicBox);
 
 
         }
         //################################[SORTING ALGORIHTM]################################
 
 
-
-
-        // function for counting sort
-        public static void countingSort(int[] Array)
+       public  static void countingSort(int[] arr)
         {
-            int n = Array.Length;
-            int max = 0;
-            //find largest element in the Array
-            for (int i = 0; i < n; i++)
+            int n = arr.Length;
+
+            // The output intger array that
+            // will have sorted arr
+            int[] output = new int[n];
+
+            // Create a count array to store
+            // count of individual intger
+            // and initialize count array as 0
+            int[] count = new int[256];
+
+            for (int i = 0; i < 256; ++i)
+                count[i] = 0;
+
+            // store count of each intger
+            for (int i = 0; i < n; ++i)
+                ++count[arr[i]];
+
+            // Change count[i] so that count[i]
+            // now contains actual position of
+            // this intger in output array
+            for (int i = 1; i <= 255; ++i)
+                count[i] += count[i - 1];
+
+            // Build the output intger array
+            // To make it stable we are operating in reverse order.
+            for (int i = n - 1; i >= 0; i--)
             {
-                if (max < Array[i])
-                {
-                    max = Array[i];
-                }
+                output[count[arr[i]] - 1] = arr[i];
+                --count[arr[i]];
             }
 
-            //Create a freq array to store number of occurrences of 
-            //each unique elements in the given array 
-            int[] freq = new int[max + 1];
-            for (int i = 0; i < max + 1; i++)
-            {
-                freq[i] = 0;
-            }
-            for (int i = 0; i < n; i++)
-            {
-                freq[Array[i]]++;
-            }
-
-            //sort the given array using freq array
-            for (int i = 0, j = 0; i <= max; i++)
-            {
-                while (freq[i] > 0)
-                {
-                    Array[j] = i;
-                    j++;
-                    freq[i]--;
-                }
-            }
+            // Copy the output array to arr, so
+            // that arr now contains sorted
+            // intger
+            for (int i = 0; i < n; ++i)
+                arr[i] = output[i];
         }
+      
+    
+
 
         public static void quickSort(int[] arr, int start, int end)
         {
@@ -422,48 +450,19 @@ namespace ImageFilters
             return i + 1;
         }
 
-        /*  public static int KthSmallestHeap(int[] arr, int k)
-          {
-              Heap heap = new Heap(arr);
-              heap.BuildMinHeap();
-              int maxIndex = heap.Size() - 1;
 
-              for (int i = k; i > 0; i--)
-              {
-                  // Placing smallest element from 0th index to end indexes
-                  heap.Swap(0, maxIndex);
-                  // Reducing maxIndex so heapify runs till unsorted elements only leaving swapped elements
-                  maxIndex--;
-                  // MinHeapify places smallest element at 0th index
-                  heap.MinHeapify(0, maxIndex);
-              }
-
-              return heap.ElementAt(heap.Size() - k);
-          }
-
-          public static int KthLargestHeap(int[] arr, int k)
-          {
-              Heap heap = new Heap(arr);
-              heap.BuildMaxHeap();
-              int maxIndex = heap.Size() - 1;
-
-              for (int i = k; i > 0; i--)
-              {
-                  heap.Swap(0, maxIndex);
-                  maxIndex--;
-                  heap.MaxHeapify(0, maxIndex);
-              }
-
-              return heap.ElementAt(heap.Size() - k);
-          }
-         */
         public static void alert(int x)
         {
             if(x==1)
            MessageBox.Show("Please Enter WindowSize & WindowMaxSize","Error Fields Are Null");
             else if (x==2)
                 MessageBox.Show("Please Load An Image ","Error No Image Found");
-
+            else if (x == 3)
+                MessageBox.Show("Done ! ", "Task Completed Successfully");
+            else if (x == 4)
+                MessageBox.Show("Please Enter Valid Values For WindowSize & WindowMaxSize");
+            else if (x == 5)
+                MessageBox.Show("This program Uses Filtering By SlidingWindow[No-Padding Method]Please Increase MaxWindowSize , To Properly Filter the Image  ");
         }
 
 
